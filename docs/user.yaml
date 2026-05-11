@@ -1,0 +1,182 @@
+openapi: 3.0.0
+info: 
+  title: Documentation for user
+  version: 1.0
+  description: documentation api for user
+paths: 
+  /api/v1/user: 
+    post:
+      summary: create user
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required: 
+                - email
+                - fullName
+              properties: 
+                fullName:
+                  type: String
+                  example: boss man
+                email: 
+                  type: String
+                  example: man@gmail.com
+                phoneNumber:
+                  type: String
+                  example: 07035439067
+                password: 
+                  type: String
+                  example: password123
+      responses: 
+        "201":
+          description: "User created successfully"
+
+  /api/v1/user/login: 
+    post:
+      summary: login user
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required: 
+                - email
+                - password
+              properties: 
+                email: 
+                  type: string
+                  example: ogo@gmail.com
+                password: 
+                  type: string,
+                  example: ogo@iufovngib
+      responses: 
+        "201":
+          description: "User logged in successfully"
+
+  /api/v1/verify-email: 
+    post:
+      summary: verify email
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required: 
+                - email
+                - otp
+              properties: 
+                email: 
+                  type: string
+                  example: ogo@gmail.com
+                otp: 
+                  type: string
+      responses: 
+        "201":
+          description: "Email verified successfully"
+
+  /api/v1/forget-password: 
+    post:
+      summary: forget password
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required: 
+                - email
+              properties: 
+                email: 
+                  type: string
+                  example: ogo@gmail.com
+      responses: 
+        "200":
+          description: "Password reset successfully"
+  /api/v1/reset-password: 
+    post:
+      summary: reset password
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required:
+                - otp 
+                - password
+                - email
+              properties: 
+                otp: 
+                  type: string
+                  example: ogo@gmail.com
+                password: 
+                  type: string
+                  example: ogo@gmail.com
+                email: 
+                  type: string
+                  example: ogo@gmail.com
+      responses: 
+        "200":
+          description: "Password reset successfully"
+  /api/v1/change-password: 
+    post:
+      summary: change password
+      tags: [users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: 
+              type: object
+              required:
+                - oldPassword 
+                - newPassword
+              properties: 
+                oldPassword: 
+                  type: string
+                  example: offorzor@iufovngib
+                newPassword: 
+                  type: string
+      responses:
+        "200":
+          description: "Password changed successfully"
+
+  /api/v1/update/{id}: 
+    put:
+      summary: update user
+      parameters:
+        - in: path
+          name: id
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: 
+              type: object
+              required:
+                - bankName
+                - accountNumber
+                - profilePicture
+              properties: 
+                bankName: 
+                  type: string
+                accountNumber: 
+                  type: string
+                profilePicture:
+                  type: string
+                  format: binary
+      responses: 
+        "200":
+          description: "User updated successfully"

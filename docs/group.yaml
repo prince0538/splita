@@ -1,0 +1,73 @@
+openapi: 3.0.0
+info: 
+  title: Documentation for group
+  version: 1.0
+  description: documentation api for group
+paths:
+  /api/v1/group:
+    post:
+      summary: create group
+      tags: [groups]
+      security: 
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: 
+                - groupName
+                - contributionAmount
+                - contributionFrequency
+                - payoutAmount
+                - describeGroup
+                - TotalMembers
+              properties:
+                groupName:
+                  type: string
+                  example: group name
+                contributionAmount:
+                  type: string
+                  example: "1000"
+                contributionFrequency: 
+                  type: string
+                  example: daily
+                payoutAmount: 
+                  type: string
+                  example: 10000
+                describeGroup:
+                  type: string
+                  example: Describe group
+                TotalMembers: 
+                  type: string
+                  example: 10
+      responses:
+        "201":
+          description: "Group created successfully"
+
+    get: 
+      summary: get all groups
+      tags: [groups]
+      security: 
+        - bearerAuth: []
+      responses: 
+        "200": 
+          description: "All groups retrieved successfully"
+
+  /api/v1/group/{id}:
+    get:
+      summary: get one group
+      tags: [groups]
+      security: 
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: 690969d1cc6037d46ed68177
+      responses:
+        "200":
+          description: "Group retrieved successfully"
