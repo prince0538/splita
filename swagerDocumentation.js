@@ -10,6 +10,10 @@ const options = {
         },
         servers: [
             {
+                url: "https://splita-7jyt.onrender.com",
+                description: 'Hosted server'
+            },
+            {
                 url: "http://localhost:3000",
                 description: 'development server'
             }
