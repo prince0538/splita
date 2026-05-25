@@ -2,6 +2,42 @@ const paymentModel = require("../models/payment");
 const groupModel = require("../models/group");
 const userModel = require("../models/user")
 const axios = require("axios");
+const crypto = require("crypto");
+
+const terminalStatuses = ["success", "failed", "abandoned"];
+
+const compareSignatures = (expectedSignature, receivedSignature) => {
+  if (!expectedSignature || !receivedSignature) {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(expectedSignature, "hex");
+  const receivedBuffer = Buffer.from(receivedSignature, "hex");
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+};
+
+const updatePaymentStatus = async (reference, status) => {
+  if (!reference || !terminalStatuses.includes(status)) {
+    return null;
+  }
+
+  const payment = await paymentModel.findOne({
+    reference: `TCA-Splita-${reference}`,
+  });
+
+  if (!payment || payment.status === "success") {
+    return payment;
+  }
+
+  payment.status = status;
+  await payment.save();
+
+  return payment;
+};
 
 exports.initailizePaystackPayment = async (req, res) => {
   try {
@@ -103,6 +139,48 @@ exports.verifyPaystackPayment = async (req, res) => {
     console.log(error);
     res.status(500).json({
       message: "Failed to verify payment",
+    });
+  }
+};
+
+exports.paystackWebhook = async (req, res) => {
+  try {
+    const signature = req.headers["x-paystack-signature"];
+    const secretKey = process.env.PAYSTACK_API_KEY;
+
+    if (!signature || !secretKey || !req.body?.data) {
+      return res.status(401).json({
+        message: "Invalid webhook request",
+      });
+    }
+
+    const hash = crypto
+      .createHmac("sha512", secretKey)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    if (!compareSignatures(hash, signature)) {
+      return res.status(401).json({
+        message: "Invalid webhook signature",
+      });
+    }
+
+    const event = req.body.event;
+    const paymentData = req.body.data;
+
+    if (event === "charge.success" && paymentData.status === "success") {
+      await updatePaymentStatus(paymentData.reference, "success");
+    }
+
+    if (paymentData.status === "failed" || paymentData.status === "abandoned") {
+      await updatePaymentStatus(paymentData.reference, paymentData.status);
+    }
+
+    return res.sendStatus(200);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      message: "Failed to process webhook",
     });
   }
 };

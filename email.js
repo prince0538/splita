@@ -5,108 +5,71 @@ exports.emailTemplate = (fullName, otp) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>your otp?</title>
+    <title>Email OTP Verification</title>
     <style>
-    * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    width: 100%;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.main-section {
-    width: 50%;
-    height: 100%;
-    background-color: grey;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    padding: 10px;
-    gap: 10px;
-}
-.upper-div {
-    width: 100%;
-    height: 30%;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    
-}
-.upper-div-1 {
-    width: 100%;
-    height: 30%;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-
-    p {
-        align-self: center;
-    }
-}
-.upper-div-2 {
-    width: 50%;
-    height: 30%;
-    background-color: rgb(207, 182, 182);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.upper-div-3 {
-    width: 100%;
-    height: 30%;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-
-    p {
-        align-self: center;
-    }
-
-}
-.downer-div {
-     width: 100%;
-    height: 30%;
-    background-color: white;   
-}
+        @media screen and (max-width: 600px) {
+            .container { width: 100% !important; border-radius: 0px !important; }
+            .otp-code { font-size: 32px !important; letter-spacing: 6px !important; }
+            .content { padding: 30px 20px !important; }
+        }
     </style>
-<body>
-    <div class="main-section">
-        <div class="upper-div">
-            <div class="upper-div-1">
-                <h1>Email OTP Verification</h1>
-                <h3>Hello, ${fullName}</h3>
-                <p>Below is your one time passcode that you need to use to complete your authentication. The verification code will be valid for 30 minutes. Please do not share this code with anyone.</p>
-            </div>
-            <div class="upper-div-2">
-                <h2> ${otp} </h2>
-            </div>
-            <div class="upper-div-3">
-                <p>If you are having any issues with your account, please don't hesitate to contact us.</p>
-                <p>Enjoy the fastest & most secure way to buy Airtime, Mobile Data & to pay Bills.</p>
-            </div>
-        </div>
-        <div class="downer-div">
-            <p>If you would like to know more about our services, please also refer to Helpcenter</p>
-            <p>Splita Team</p>
-        </div>
-    </div>
+</head>
+<body style="margin: 0; padding: 0; background-color: #eef7fb; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+    <center>
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eef7fb;">
+            <tr>
+                <td align="center" style="padding: 40px 10px;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="container" style="width: 100%; max-width: 520px; background-color: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 12px 35px rgba(15, 118, 160, 0.16);">
+                        
+                        <tr>
+                            <td align="center" style="padding: 34px 24px; background-color: #053b50;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: 1.5px;">SPLITA</h1>
+                                <p style="margin: 10px 0 0; color: #9ee8ff; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">Secure account verification</p>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="content" style="padding: 40px; text-align: center; color: #333333;">
+                                <div style="width: 58px; height: 58px; margin: 0 auto 22px; border-radius: 50%; background-color: #e0f7ff; border: 1px solid #a7edff; color: #00a8d8; font-size: 28px; font-weight: bold; line-height: 58px;">
+                                    &#10003;
+                                </div>
+
+                                <h2 style="margin: 0 0 15px; font-size: 24px; font-weight: 800; color: #0f172a;">Email OTP Verification</h2>
+                                <p style="font-size: 16px; line-height: 1.6; margin: 0 0 28px; color: #64748b;">
+                                    Hello ${fullName}, below is your one-time passcode to complete your authentication.
+                                </p>
+                                
+                                <div style="background-color: #f0fbff; border: 2px solid #00d2ff; border-radius: 16px; padding: 26px; margin: 22px 0; box-shadow: inset 0 0 0 4px #dff8ff;">
+                                    <span class="otp-code" style="font-family: 'Courier New', Courier, monospace; font-size: 40px; font-weight: bold; letter-spacing: 10px; color: #053b50; display: block;">
+                                        ${otp}
+                                    </span>
+                                </div>
+
+                                <p style="font-size: 14px; color: #64748b; margin-top: 25px; line-height: 1.5;">
+                                    This code is valid for <strong>30 minutes</strong>. <br>
+                                    Please do not share this code with anyone.
+                                </p>
+
+                                <p style="font-size: 14px; color: #475569; margin-top: 28px; line-height: 1.6; background-color: #f8fafc; border-left: 4px solid #00d2ff; padding: 14px 16px; text-align: left; border-radius: 10px;">
+                                    Enjoy the fastest and most secure way to buy airtime, mobile data, and pay bills.
+                                </p>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td align="center" style="padding: 25px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
+                                <p style="margin: 0;">&copy; 2026 SPLITA App. All rights reserved.</p>
+                                <p style="margin: 8px 0 0;">
+                                    <a href="#" style="color: #00a8d8; text-decoration: none; font-weight: 600;">Help Center</a> &bull; 
+                                    <a href="#" style="color: #00a8d8; text-decoration: none; font-weight: 600;">Contact Support</a>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </center>
 </body>
 </html>
     `

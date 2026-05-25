@@ -21,6 +21,9 @@ exports.userValidator = (req, res, next) => {
             'any.required': "password is required",
             "string.empty": "password cannot be empty",
             'string.pattern.base': "password must contain at least one lowercase letter, one uppercase letter, one digit and one special character"
+        }),
+        role: joi.any().only('user', 'admin').messages({
+            'any.only': "Role must be either 'user' or 'admin'"
         })
     })
 

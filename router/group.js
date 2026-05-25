@@ -3,7 +3,7 @@ const { createGroup, getAllGroup, removeMemberFromGroup, getOneGroup } = require
 const { authentication } = require('../middlewares/auth');
 
 router.post('/', authentication, createGroup);
-router.get('/', getAllGroup);
+router.get('/all-groups', getAllGroup);
 router.get('/:id', getOneGroup);
 router.delete('/:groupId/:memberId', authentication, removeMemberFromGroup);
 

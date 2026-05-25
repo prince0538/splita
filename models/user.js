@@ -31,6 +31,12 @@ const userSchema = new mongoose .Schema({
         //     .padStart(6, '0');
         // },
     },
+    otpExpire: {
+        type: Number,
+        default: () => { 
+            return Date.now() + (10 * 60 * 1000)
+        }
+    },
     profilePicture: {
         secureUrl: {
             type: String,
@@ -47,10 +53,21 @@ const userSchema = new mongoose .Schema({
         type: Boolean,
         require: true
     },
+    loginAttempts: {
+        type: Number,
+        default: 0
+    },
+    isLocked: {
+        type: Boolean,
+        default: false
+    },
+    lockedAt: {
+        type: Date
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],
-        default: 'user'
+        default: 'user',
     },
     bankName: {
         type: String,

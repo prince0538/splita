@@ -3,6 +3,40 @@ const groupModel = require("../models/group");
 const userModel = require("../models/user");
 const otpGenerator = require("otp-generator");
 const axios = require("axios");
+const crypto = require("crypto");
+
+const terminalStatuses = ["success", "failed", "abandoned"];
+
+const compareSignatures = (expectedSignature, receivedSignature) => {
+  if (!expectedSignature || !receivedSignature) {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(expectedSignature, "hex");
+  const receivedBuffer = Buffer.from(receivedSignature, "hex");
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+};
+
+const updatePaymentStatus = async (reference, status) => {
+  if (!reference || !terminalStatuses.includes(status)) {
+    return null;
+  }
+
+  const payment = await paymentModel.findOne({ reference });
+
+  if (!payment || payment.status === "success") {
+    return payment;
+  }
+
+  payment.status = status;
+  await payment.save();
+
+  return payment;
+};
 
 exports.initailizePayment = async (req, res) => {
   try {
@@ -125,6 +159,47 @@ exports.verifyPayment = async (req, res) => {
     console.log(error);
     res.status(500).json({
       message: "Failed to verify payment",
+    });
+  }
+};
+
+exports.koraWebhook = async (req, res) => {
+  try {
+    const signature = req.headers["x-korapay-signature"];
+    const secretKey = process.env.KORA_SECRET_KEY || process.env.KORA_API_KEY;
+
+    if (!signature || !secretKey || !req.body?.data) {
+      return res.status(401).json({
+        message: "Invalid webhook request",
+      });
+    }
+
+    const hash = crypto
+      .createHmac("sha256", secretKey)
+      .update(JSON.stringify(req.body.data))
+      .digest("hex");
+
+    if (!compareSignatures(hash, signature)) {
+      return res.status(401).json({
+        message: "Invalid webhook signature",
+      });
+    }
+
+    const event = req.body.event;
+    const paymentData = req.body.data;
+    if (event === "charge.success" && paymentData.status === "success") {
+      await updatePaymentStatus(paymentData.reference, "success");
+    }
+
+    if (paymentData.status === "failed" || paymentData.status === "abandoned") {
+      await updatePaymentStatus(paymentData.reference, paymentData.status);
+    }
+
+    return res.sendStatus(200);
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      message: "Failed to process webhook",
     });
   }
 };

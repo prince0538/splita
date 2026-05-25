@@ -6,6 +6,9 @@ const {brevo} = require('../utils/brevo');
 const {emailTemplate, resetPasswordTemplate, resetPasswordSuccessfulTemplate } = require('../email')
 const jwt = require('jsonwebtoken');
 const otpGenerator = require('otp-generator');
+const redis = require('../utils/redis');
+
+const MAX_LOGIN_ATTEMPTS = 5;
 
 exports.createUser = async(req, res) => {
     try {
@@ -29,13 +32,15 @@ exports.createUser = async(req, res) => {
         const hashPassword = await bcrypt.hash(password, salt);
         const newUser = new userModel({
             fullName,
-            email,
+            email: email.toLowerCase(),
             phoneNumber,
             password: hashPassword,
             otp,
             role
         })
-        brevo(newUser.email, newUser.fullName, emailTemplate(newUser.fullName, newUser.otp))
+        brevo(newUser.email, newUser.fullName, emailTemplate(newUser.fullName, newUser.otp), 'Verify your SPLITA email')
+
+        isVerified = false;
         await newUser.save()
         res.status(201).json({
             message: 'User created successfully',
@@ -115,24 +120,46 @@ exports.verifyEmail = async(req, res) => {
         })
     }
 }
-
 exports.login = async(req, res) => {
     try {
-        
         const { email, password } = req.body;
-        const user = await userModel.findOne({email: email})
+        const normalizedEmail = email.toLowerCase();
+        const user = await userModel.findOne({email: normalizedEmail})
 
-        if(!user || user.email !== email || !user.password) {
+        if(!user) {
             return res.status(404).json({
                 message: 'Invalid credentials'
             })
         };
 
-        const correctPassword = await bcrypt.compare(password, user.password);
+        // if(user.isLocked) {
+        //     return res.status(429).json({
+        //         message: 'Account locked'
+        //     })
+        // }
+        
 
+        const correctPassword = await bcrypt.compare(password, user.password);
+        console.log('Login attempts', user.loginAttempts)
         if(!correctPassword) {
+            user.loginAttempts = (user.loginAttempts || 0) + 1;
+
+            if(user.loginAttempts >= 5) {
+                user.isLocked = true;
+                user.lockedAt = new Date();
+                await user.save();
+                return res.status(429).json({
+                    message: 'Account locked'
+                })
+            }
+
+            await user.save();
+
+            
+
             return res.status(404).json({
-                message: 'Invalid Credentials'
+                message: 'Invalid Credentials',
+                attemptsRemaining: 5 - user.loginAttempts
             })
         };
 
@@ -141,6 +168,11 @@ exports.login = async(req, res) => {
                 message: 'Please verify your email'
             })
         };
+
+        user.loginAttempts = 0;
+        user.isLocked = false;
+        user.lockedAt = undefined;
+        await user.save();
 
         const token = jwt.sign({id: user._id, role: user.role}, process.env.JWT_SECRET, {expiresIn: '1h'});
         res.status(200).json({ 
@@ -180,7 +212,7 @@ exports.forgetPassword = async(req, res) => {
             name: user.fullName,
             otp: otp
         }
-        brevo(user.email, user.fullName, resetPasswordTemplate(data))
+        brevo(user.email, user.fullName, resetPasswordTemplate(data), 'Reset your SPLITA password')
         await user.save()
         res.status(200).json({
             message: 'OTP sent successfully'
@@ -198,16 +230,15 @@ exports.resetPassword = async(req, res) => {
     try {
         const { otp, password, email } = req.body;
         const user = await userModel.findOne({ email: email.toLowerCase() });
+        
 
-        if(user == null) {
+        if(!user) {
             return res.status(404).json({
                 message: 'Invaild credentials'
             })
         }
-        console.log(Date.now() > user.otpExpires)
-        
-        console.log(user.otp)
 
+        
         if(Date.now() > user.otpExpires || otp !== user.otp) {
             return res.status(400).json({
                 message: 'Invalid OTP'
@@ -215,15 +246,18 @@ exports.resetPassword = async(req, res) => {
         }
 
         const salt = await bcrypt.genSalt(10);
+        // console.log('Generated salt:', salt);
+        // console.log('Data:', password);
         const hashPassword = await bcrypt.hash(password, salt);
-        user.password = hashPassword
+        user.password = hashPassword;
         await user.save();
-        brevo(user.email, user.fullName, resetPasswordSuccessfulTemplate(user.fullName))
+        brevo(user.email, user.fullName, resetPasswordSuccessfulTemplate(user.fullName), 'Your SPLITA password was reset')
         res.status(200).json({
-            message: 'Password reset successful'
+            message: 'Password reset successful',
+            data: user
         })
     } catch (error) {
-        console.log(error.message)
+        console.log(error)
         res.status(500).json({
             message: 'Something went wrong'
         })
@@ -290,8 +324,19 @@ exports.loginWithGoogle = async (req, res) => {
 
 exports.getAllUser = async (req, res) => {
     try {
+
+        const checkCache = await redis.get('users')
+        console.log(checkCache)
+        if(checkCache) {
+            return res.status(200).json({
+                message: 'User retrieved successfully',
+                data: JSON.parse(checkCache)
+            })
+        }
+
         const user = await userModel.find()
 
+        await redis.set('users', JSON.stringify(user), 'EX' ,60)
         res.status(200).json({
             message: 'All users retrieved successfully',
             data: user
